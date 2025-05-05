@@ -6,7 +6,7 @@ import StatusSlider from '@/components/StatusSlider';
 import HealthStat from '@/components/HealthStat';
 import { useHealth } from '@/contexts/HealthContext';
 import { useNavigate } from 'react-router-dom';
-import { smile, frown, messageSquare } from 'lucide-react';
+import { Smile, Frown, MessageSquare } from 'lucide-react';
 
 const Home: React.FC = () => {
   const { statusRatings, healthStats, updateRating, refreshHealthStats } = useHealth();
@@ -42,8 +42,8 @@ const Home: React.FC = () => {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Status Check-in</h2>
                 <div className="flex space-x-1">
-                  <smile className="h-5 w-5 text-green-500" />
-                  <frown className="h-5 w-5 text-red-500" />
+                  <Smile className="h-5 w-5 text-green-500" />
+                  <Frown className="h-5 w-5 text-red-500" />
                 </div>
               </div>
               
@@ -79,7 +79,7 @@ const Home: React.FC = () => {
             onClick={() => navigate('/chat')}
             className="w-full bg-mental-purple hover:bg-mental-darkPurple text-white py-6 flex items-center justify-center space-x-2"
           >
-            <messageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5" />
             <span>Talk to Your Assistant</span>
           </Button>
         </section>

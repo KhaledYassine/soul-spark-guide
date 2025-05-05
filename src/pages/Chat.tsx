@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import ChatMessage from '@/components/ChatMessage';
 import { useChat } from '@/contexts/ChatContext';
 import { useNavigate } from 'react-router-dom';
-import { messageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 const Chat: React.FC = () => {
   const { messages, sendMessage, isLoading } = useChat();
@@ -74,7 +74,7 @@ const Chat: React.FC = () => {
             disabled={!inputValue.trim() || isLoading}
             className="bg-mental-purple hover:bg-mental-darkPurple text-white"
           >
-            <messageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5" />
           </Button>
         </form>
       </footer>

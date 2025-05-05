@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { heart, activity } from "lucide-react";
+import { Heart, Activity } from "lucide-react";
 
 interface HealthStatProps {
   type: 'heartRate' | 'steps';
@@ -8,7 +8,7 @@ interface HealthStatProps {
 }
 
 const HealthStat: React.FC<HealthStatProps> = ({ type, value }) => {
-  const Icon = type === 'heartRate' ? heart : activity;
+  const Icon = type === 'heartRate' ? Heart : Activity;
   const label = type === 'heartRate' ? 'Heart Rate' : 'Steps Today';
   const unit = type === 'heartRate' ? 'bpm' : '';
   const formattedValue = type === 'heartRate' ? value : value.toLocaleString();
