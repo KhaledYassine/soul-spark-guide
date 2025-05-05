@@ -21,7 +21,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     {
       id: '1',
       role: 'assistant',
-      content: 'Hi there! I'm your mental wellness assistant. How are you feeling today?',
+      content: "Hi there! I'm your mental wellness assistant. How are you feeling today?",
       timestamp: new Date(),
     },
   ]);
