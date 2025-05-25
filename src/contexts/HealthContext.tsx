@@ -1,61 +1,49 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
-interface StatusRatings {
+interface HealthData {
+  heartRate: number;
+  steps: number;
   energy: number;
   happiness: number;
   productivity: number;
   stress: number;
-}
-
-interface HealthStats {
-  heartRate: number;
-  steps: number;
+  lastUpdated: Date;
 }
 
 interface HealthContextType {
-  statusRatings: StatusRatings;
-  healthStats: HealthStats;
-  updateRating: (category: keyof StatusRatings, value: number) => void;
-  refreshHealthStats: () => void;
+  healthData: HealthData;
+  updateHealthData: (data: Partial<HealthData>) => void;
+  updateStatus: (status: { energy: number; happiness: number; productivity: number; stress: number }) => void;
 }
 
 const HealthContext = createContext<HealthContextType | undefined>(undefined);
 
 export const HealthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [statusRatings, setStatusRatings] = useState<StatusRatings>({
-    energy: 3,
-    happiness: 3,
-    productivity: 3,
-    stress: 3,
-  });
-
-  const [healthStats, setHealthStats] = useState<HealthStats>({
+  const [healthData, setHealthData] = useState<HealthData>({
     heartRate: 72,
-    steps: 5280,
+    steps: 8543,
+    energy: 3,
+    happiness: 4,
+    productivity: 3,
+    stress: 2,
+    lastUpdated: new Date(),
   });
 
-  const updateRating = (category: keyof StatusRatings, value: number) => {
-    setStatusRatings(prev => ({
+  const updateHealthData = (data: Partial<HealthData>) => {
+    setHealthData(prev => ({
       ...prev,
-      [category]: value,
+      ...data,
+      lastUpdated: new Date(),
     }));
   };
 
-  const refreshHealthStats = () => {
-    // This is a mock implementation
-    // In a real app, this would fetch from a health API or device
-    const newHeartRate = 65 + Math.floor(Math.random() * 20);
-    const newSteps = 4000 + Math.floor(Math.random() * 6000);
-    
-    setHealthStats({
-      heartRate: newHeartRate,
-      steps: newSteps,
-    });
+  const updateStatus = (status: { energy: number; happiness: number; productivity: number; stress: number }) => {
+    updateHealthData(status);
   };
 
   return (
-    <HealthContext.Provider value={{ statusRatings, healthStats, updateRating, refreshHealthStats }}>
+    <HealthContext.Provider value={{ healthData, updateHealthData, updateStatus }}>
       {children}
     </HealthContext.Provider>
   );

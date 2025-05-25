@@ -1,27 +1,34 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import ChatMessage from '@/components/ChatMessage';
-import ChatList from '@/components/ChatList';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChat } from '@/contexts/ChatContext';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ArrowLeft, List } from 'lucide-react';
+import ChatMessage from '@/components/ChatMessage';
+import ChatList from '@/components/ChatList';
+import { Send, ArrowLeft, MessageSquare } from 'lucide-react';
 
 const Chat: React.FC = () => {
   const { currentSession, chatSessions, sendMessage, createNewSession, switchToSession, isLoading } = useChat();
-  const [inputValue, setInputValue] = useState('');
+  const [inputMessage, setInputMessage] = useState('');
   const [showChatList, setShowChatList] = useState(!currentSession);
-  const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+  const navigate = useNavigate();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [currentSession?.messages]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading || !currentSession) return;
-    
-    const messageText = inputValue;
-    setInputValue('');
-    await sendMessage(messageText);
+    if (!inputMessage.trim() || isLoading) return;
+
+    await sendMessage(inputMessage);
+    setInputMessage('');
   };
 
   const handleNewChat = () => {
@@ -34,60 +41,72 @@ const Chat: React.FC = () => {
     setShowChatList(false);
   };
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentSession?.messages]);
-
-  // Auto-create first session if none exist
-  useEffect(() => {
-    if (chatSessions.length === 0) {
-      createNewSession();
-    }
-  }, []);
-
-  if (showChatList) {
+  if (showChatList || !currentSession) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-b from-mental-lightGray to-white">
-        <header className="p-4 flex justify-between items-center border-b bg-white">
-          <Button variant="ghost" onClick={() => navigate('/home')} className="px-2">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold">Chats</h1>
-          <div className="w-8"></div>
-        </header>
-        
-        <main className="flex-1 p-4">
-          <ChatList 
-            chatSessions={chatSessions.map(session => ({
-              id: session.id,
-              title: session.title,
-              lastMessage: session.messages[session.messages.length - 1]?.content || '',
-              timestamp: session.lastActivity,
-            }))}
-            onSelectChat={handleSelectChat}
-            onNewChat={handleNewChat}
-          />
-        </main>
+      <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center mb-6">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate('/home')}
+              className="mr-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-900">Mental Health Assistant</h1>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-mental-purple">
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Your Conversations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChatList
+                chatSessions={chatSessions.map(session => ({
+                  id: session.id,
+                  title: session.title,
+                  lastMessage: session.messages[session.messages.length - 1]?.content || '',
+                  timestamp: session.lastActivity,
+                }))}
+                onSelectChat={handleSelectChat}
+                onNewChat={handleNewChat}
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-mental-lightGray to-white">
-      <header className="p-4 flex justify-between items-center border-b bg-white">
-        <Button variant="ghost" onClick={() => setShowChatList(true)} className="px-2">
-          <List className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-semibold">Assistant Chat</h1>
-        <Button variant="ghost" onClick={() => navigate('/home')} className="px-2">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-      </header>
-      
-      <main className="flex-1 p-4 overflow-y-auto">
-        <div className="max-w-3xl mx-auto">
-          {currentSession?.messages.map((message) => (
+    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowChatList(true)}
+              className="mr-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {currentSession.title}
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {currentSession.messages.map((message) => (
             <ChatMessage
               key={message.id}
               content={message.content}
@@ -96,36 +115,42 @@ const Chat: React.FC = () => {
             />
           ))}
           {isLoading && (
-            <div className="flex justify-start mb-4">
-              <div className="flex space-x-2 bg-gray-100 rounded-2xl px-4 py-3 rounded-tl-none">
-                <div className="h-2 w-2 bg-gray-400 rounded-full animate-pulse"></div>
-                <div className="h-2 w-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="h-2 w-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            <div className="flex justify-start">
+              <div className="bg-gray-100 rounded-2xl px-4 py-3 rounded-tl-none">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
-      </main>
-      
-      <footer className="p-3 border-t bg-white">
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-3xl mx-auto">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type your message..."
-            className="mental-input flex-1"
-            disabled={isLoading}
-          />
-          <Button 
-            type="submit" 
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-mental-purple hover:bg-mental-darkPurple text-white"
-          >
-            <MessageSquare className="h-5 w-5" />
-          </Button>
-        </form>
-      </footer>
+      </div>
+
+      {/* Input */}
+      <div className="bg-white border-t border-gray-200 p-4">
+        <div className="max-w-4xl mx-auto">
+          <form onSubmit={handleSendMessage} className="flex space-x-4">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mental-purple focus:border-transparent"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              disabled={!inputMessage.trim() || isLoading}
+              className="bg-mental-purple hover:bg-mental-darkPurple text-white px-6"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };
