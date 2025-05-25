@@ -13,6 +13,7 @@ import Assessment from "./pages/Assessment";
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
 import Dashboard from "./pages/Dashboard";
+import DoctorAdvice from "./pages/DoctorAdvice";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                   <Route path="/home" element={<Home />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/doctor-advice" element={<DoctorAdvice />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

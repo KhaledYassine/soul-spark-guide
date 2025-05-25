@@ -9,7 +9,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import HealthStat from '@/components/HealthStat';
 import StatusSlider from '@/components/StatusSlider';
-import { MessageSquare, BarChart3, Bell } from 'lucide-react';
+import { MessageSquare, BarChart3, Bell, Stethoscope } from 'lucide-react';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
@@ -46,6 +46,14 @@ const Home: React.FC = () => {
               className="relative"
             >
               <BarChart3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate('/doctor-advice')}
+              className="relative"
+            >
+              <Stethoscope className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -114,6 +122,23 @@ const Home: React.FC = () => {
               className="bg-mental-purple hover:bg-mental-darkPurple text-white"
             >
               Start Conversation
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Doctor Advice Section */}
+        <Card>
+          <CardContent className="p-6 text-center">
+            <Stethoscope className="h-12 w-12 text-mental-purple mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Share with Healthcare Provider</h3>
+            <p className="text-gray-600 mb-4">
+              Share your mental health data with your doctor for better care and insights.
+            </p>
+            <Button 
+              onClick={() => navigate('/doctor-advice')}
+              className="bg-mental-purple hover:bg-mental-darkPurple text-white"
+            >
+              Share Data with Doctor
             </Button>
           </CardContent>
         </Card>
