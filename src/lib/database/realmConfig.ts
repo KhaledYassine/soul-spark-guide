@@ -10,6 +10,7 @@ export const initializeRealm = async () => {
   }
 
   try {
+    console.log('Opening Realm database...');
     realmInstance = await Realm.open({
       schema: schemas,
       schemaVersion: 1,
@@ -34,5 +35,6 @@ export const closeRealm = () => {
   if (realmInstance) {
     realmInstance.close();
     realmInstance = null;
+    console.log('Realm database closed');
   }
 };
