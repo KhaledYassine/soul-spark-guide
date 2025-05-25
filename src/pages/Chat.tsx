@@ -3,43 +3,91 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ChatMessage from '@/components/ChatMessage';
+import ChatList from '@/components/ChatList';
 import { useChat } from '@/contexts/ChatContext';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ArrowLeft, List } from 'lucide-react';
 
 const Chat: React.FC = () => {
-  const { messages, sendMessage, isLoading } = useChat();
+  const { currentSession, chatSessions, sendMessage, createNewSession, switchToSession, isLoading } = useChat();
   const [inputValue, setInputValue] = useState('');
+  const [showChatList, setShowChatList] = useState(!currentSession);
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !currentSession) return;
     
     const messageText = inputValue;
     setInputValue('');
     await sendMessage(messageText);
   };
 
+  const handleNewChat = () => {
+    createNewSession();
+    setShowChatList(false);
+  };
+
+  const handleSelectChat = (chatId: string) => {
+    switchToSession(chatId);
+    setShowChatList(false);
+  };
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [currentSession?.messages]);
+
+  // Auto-create first session if none exist
+  useEffect(() => {
+    if (chatSessions.length === 0) {
+      createNewSession();
+    }
+  }, []);
+
+  if (showChatList) {
+    return (
+      <div className="flex flex-col h-screen bg-gradient-to-b from-mental-lightGray to-white">
+        <header className="p-4 flex justify-between items-center border-b bg-white">
+          <Button variant="ghost" onClick={() => navigate('/home')} className="px-2">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-semibold">Chats</h1>
+          <div className="w-8"></div>
+        </header>
+        
+        <main className="flex-1 p-4">
+          <ChatList 
+            chatSessions={chatSessions.map(session => ({
+              id: session.id,
+              title: session.title,
+              lastMessage: session.messages[session.messages.length - 1]?.content || '',
+              timestamp: session.lastActivity,
+            }))}
+            onSelectChat={handleSelectChat}
+            onNewChat={handleNewChat}
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-mental-lightGray to-white">
       <header className="p-4 flex justify-between items-center border-b bg-white">
-        <Button variant="ghost" onClick={() => navigate('/home')} className="px-2">
-          &larr;
+        <Button variant="ghost" onClick={() => setShowChatList(true)} className="px-2">
+          <List className="h-5 w-5" />
         </Button>
         <h1 className="text-xl font-semibold">Assistant Chat</h1>
-        <div className="w-8"></div> {/* Spacer for alignment */}
+        <Button variant="ghost" onClick={() => navigate('/home')} className="px-2">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
       </header>
       
       <main className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-3xl mx-auto">
-          {messages.map((message) => (
+          {currentSession?.messages.map((message) => (
             <ChatMessage
               key={message.id}
               content={message.content}
@@ -78,21 +126,6 @@ const Chat: React.FC = () => {
           </Button>
         </form>
       </footer>
-      
-      {/* Navigation Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2">
-        <nav className="flex justify-around">
-          <Button variant="ghost" className="flex flex-col items-center py-1 text-gray-500" onClick={() => navigate('/home')}>
-            <span>Home</span>
-          </Button>
-          <Button variant="ghost" className="flex flex-col items-center py-1 text-mental-purple">
-            <span>Chat</span>
-          </Button>
-          <Button variant="ghost" className="flex flex-col items-center py-1 text-gray-500">
-            <span>Profile</span>
-          </Button>
-        </nav>
-      </div>
     </div>
   );
 };

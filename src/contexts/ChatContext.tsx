@@ -8,26 +8,58 @@ interface Message {
   timestamp: Date;
 }
 
-interface ChatContextType {
+interface ChatSession {
+  id: string;
+  title: string;
   messages: Message[];
+  lastActivity: Date;
+}
+
+interface ChatContextType {
+  currentSession: ChatSession | null;
+  chatSessions: ChatSession[];
   sendMessage: (content: string) => Promise<void>;
+  createNewSession: () => void;
+  switchToSession: (sessionId: string) => void;
   isLoading: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi there! I'm your mental wellness assistant. How are you feeling today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const createNewSession = () => {
+    const newSession: ChatSession = {
+      id: Date.now().toString(),
+      title: 'New Conversation',
+      messages: [
+        {
+          id: '1',
+          role: 'assistant',
+          content: "Hi there! I'm your mental wellness assistant. How are you feeling today?",
+          timestamp: new Date(),
+        },
+      ],
+      lastActivity: new Date(),
+    };
+
+    setChatSessions(prev => [newSession, ...prev]);
+    setCurrentSession(newSession);
+  };
+
+  const switchToSession = (sessionId: string) => {
+    const session = chatSessions.find(s => s.id === sessionId);
+    if (session) {
+      setCurrentSession(session);
+    }
+  };
+
   const sendMessage = async (content: string) => {
+    if (!currentSession) return;
+
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -36,12 +68,23 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       timestamp: new Date(),
     };
     
-    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     
     try {
-      // This is a mock implementation for now
-      // In a real app, this would call the OpenRouter API
+      // Update current session with user message
+      const updatedSession = {
+        ...currentSession,
+        messages: [...currentSession.messages, userMessage],
+        lastActivity: new Date(),
+        title: currentSession.messages.length === 1 ? content.slice(0, 30) + '...' : currentSession.title,
+      };
+      
+      setCurrentSession(updatedSession);
+      setChatSessions(prev => 
+        prev.map(session => 
+          session.id === currentSession.id ? updatedSession : session
+        )
+      );
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -65,17 +108,36 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         timestamp: new Date(),
       };
       
-      setMessages(prev => [...prev, assistantMessage]);
+      // Update session with assistant response
+      const finalSession = {
+        ...updatedSession,
+        messages: [...updatedSession.messages, assistantMessage],
+        lastActivity: new Date(),
+      };
+      
+      setCurrentSession(finalSession);
+      setChatSessions(prev => 
+        prev.map(session => 
+          session.id === currentSession.id ? finalSession : session
+        )
+      );
+      
     } catch (error) {
       console.error('Error sending message:', error);
-      // Handle error - perhaps add an error message to the chat
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <ChatContext.Provider value={{ messages, sendMessage, isLoading }}>
+    <ChatContext.Provider value={{ 
+      currentSession, 
+      chatSessions, 
+      sendMessage, 
+      createNewSession, 
+      switchToSession, 
+      isLoading 
+    }}>
       {children}
     </ChatContext.Provider>
   );

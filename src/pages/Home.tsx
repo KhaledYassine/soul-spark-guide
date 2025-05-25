@@ -5,11 +5,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import StatusSlider from '@/components/StatusSlider';
 import HealthStat from '@/components/HealthStat';
 import { useHealth } from '@/contexts/HealthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
-import { Smile, Frown, MessageSquare } from 'lucide-react';
+import { Smile, Frown, MessageSquare, BarChart3, Bell } from 'lucide-react';
 
 const Home: React.FC = () => {
   const { statusRatings, healthStats, updateRating, refreshHealthStats } = useHealth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -20,8 +22,18 @@ const Home: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-mental-lightGray to-white">
       <header className="p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">Soul Spark</h1>
-        <div className="text-sm bg-white px-3 py-1 rounded-full text-mental-purple font-medium">
-          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" className="relative" onClick={() => navigate('/dashboard')}>
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+          <div className="text-sm bg-white px-3 py-1 rounded-full text-mental-purple font-medium">
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </div>
         </div>
       </header>
       
@@ -73,14 +85,23 @@ const Home: React.FC = () => {
           </Card>
         </section>
         
-        {/* Chat Assistant Shortcut */}
-        <section className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
+        {/* Quick Actions */}
+        <section className="animate-fade-in space-y-3" style={{ animationDelay: "0.2s" }}>
           <Button 
             onClick={() => navigate('/chat')}
             className="w-full bg-mental-purple hover:bg-mental-darkPurple text-white py-6 flex items-center justify-center space-x-2"
           >
             <MessageSquare className="h-5 w-5" />
             <span>Talk to Your Assistant</span>
+          </Button>
+          
+          <Button 
+            onClick={() => navigate('/dashboard')}
+            variant="outline"
+            className="w-full py-6 flex items-center justify-center space-x-2"
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span>View Dashboard</span>
           </Button>
         </section>
       </main>
@@ -94,8 +115,8 @@ const Home: React.FC = () => {
           <Button variant="ghost" className="flex flex-col items-center py-1 text-gray-500" onClick={() => navigate('/chat')}>
             <span>Chat</span>
           </Button>
-          <Button variant="ghost" className="flex flex-col items-center py-1 text-gray-500">
-            <span>Profile</span>
+          <Button variant="ghost" className="flex flex-col items-center py-1 text-gray-500" onClick={() => navigate('/dashboard')}>
+            <span>Dashboard</span>
           </Button>
         </nav>
       </footer>
