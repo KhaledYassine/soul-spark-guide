@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useDatabase } from '@/contexts/DatabaseContext';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Database, Shield, Sync } from 'lucide-react';
+import { ArrowLeft, Database, Shield, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Settings: React.FC = () => {
@@ -56,7 +56,7 @@ const Settings: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-mental-purple">
-              <Sync className="h-5 w-5 mr-2" />
+              <RefreshCw className="h-5 w-5 mr-2" />
               Data Synchronization
             </CardTitle>
           </CardHeader>
