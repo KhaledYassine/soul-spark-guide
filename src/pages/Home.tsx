@@ -6,29 +6,39 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealth } from '@/contexts/HealthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useDatabase } from '@/contexts/DatabaseContext';
 import { useNavigate } from 'react-router-dom';
 import HealthStat from '@/components/HealthStat';
 import StatusSlider from '@/components/StatusSlider';
-import { MessageSquare, BarChart3, Bell, Stethoscope } from 'lucide-react';
+import { MessageSquare, Settings, Bell, Database } from 'lucide-react';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
   const { healthData, updateStatus } = useHealth();
   const { unreadCount } = useNotifications();
+  const { isRealmReady, syncPreference, saveEncryptedData } = useDatabase();
   const navigate = useNavigate();
 
-  const handleStatusUpdate = (type: string, value: number) => {
+  const handleStatusUpdate = async (type: string, value: number) => {
     const updatedStatus = {
       energy: type === 'energy' ? value : healthData.energy,
       happiness: type === 'happiness' ? value : healthData.happiness,
       productivity: type === 'productivity' ? value : healthData.productivity,
       stress: type === 'stress' ? value : healthData.stress,
     };
+    
     updateStatus(updatedStatus);
+    
+    // Save to encrypted database
+    await saveEncryptedData({
+      type: 'mood_log',
+      data: updatedStatus,
+      timestamp: new Date(),
+    }, 'mood');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6">
+    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6 pb-20">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -42,18 +52,10 @@ const Home: React.FC = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/settings')}
               className="relative"
             >
-              <BarChart3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate('/doctor-advice')}
-              className="relative"
-            >
-              <Stethoscope className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -69,6 +71,23 @@ const Home: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Database Status */}
+        <Card className="border-l-4 border-l-mental-purple">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Database className="h-4 w-4 text-mental-purple" />
+                <span className="text-sm font-medium">
+                  Database: {isRealmReady ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Sync: {syncPreference}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Health Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -122,23 +141,6 @@ const Home: React.FC = () => {
               className="bg-mental-purple hover:bg-mental-darkPurple text-white"
             >
               Start Conversation
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Doctor Advice Section */}
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Stethoscope className="h-12 w-12 text-mental-purple mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Share with Healthcare Provider</h3>
-            <p className="text-gray-600 mb-4">
-              Share your mental health data with your doctor for better care and insights.
-            </p>
-            <Button 
-              onClick={() => navigate('/doctor-advice')}
-              className="bg-mental-purple hover:bg-mental-darkPurple text-white"
-            >
-              Share Data with Doctor
             </Button>
           </CardContent>
         </Card>
