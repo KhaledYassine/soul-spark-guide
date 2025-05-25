@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { initializeRealm, getRealm, closeRealm } from '@/lib/database/realmConfig';
-import { BSON } from 'realm';
+import { initializeRealm, getRealm, closeRealm, BSON } from '@/lib/database/mockRealmConfig';
 
 interface DatabaseContextType {
   isRealmReady: boolean;
@@ -21,10 +20,10 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     const setupRealm = async () => {
       try {
-        console.log('Initializing Realm database...');
+        console.log('Initializing local database...');
         await initializeRealm();
         setIsRealmReady(true);
-        console.log('Realm database initialized successfully');
+        console.log('Local database initialized successfully');
         
         // Load user sync preference
         const realm = getRealm();
@@ -33,7 +32,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           setSyncPreferenceState(userData.syncPreference as 'local' | 'daily' | 'weekly');
         }
       } catch (error) {
-        console.error('Failed to setup Realm:', error);
+        console.error('Failed to setup local database:', error);
         setIsRealmReady(false);
       }
     };
@@ -44,7 +43,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         closeRealm();
       } catch (error) {
-        console.error('Error closing Realm:', error);
+        console.error('Error closing local database:', error);
       }
     };
   }, []);
@@ -59,7 +58,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           let userData = realm.objects('UserData')[0];
           if (!userData) {
             userData = realm.create('UserData', {
-              _id: new BSON.ObjectId(),
+              _id: BSON.ObjectId().toString(),
               rephraseKey: 'default-key',
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -79,7 +78,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const saveEncryptedData = async (data: any, category: 'mood' | 'chat' | 'health') => {
     if (!isRealmReady) {
-      console.warn('Realm not ready, cannot save data');
+      console.warn('Database not ready, cannot save data');
       return;
     }
 
@@ -92,7 +91,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       realm.write(() => {
         // Create encrypted data entry
         const encryptedData = realm.create('EncryptedData', {
-          _id: new BSON.ObjectId(),
+          _id: BSON.ObjectId().toString(),
           encryptedPayload,
           _v: 1,
         });
@@ -101,7 +100,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         let userData = realm.objects('UserData')[0];
         if (!userData) {
           userData = realm.create('UserData', {
-            _id: new BSON.ObjectId(),
+            _id: BSON.ObjectId().toString(),
             rephraseKey: 'default-key',
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -116,7 +115,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         if (!hubId) {
           const hub = realm.create('DataLogHub', {
-            _id: new BSON.ObjectId(),
+            _id: BSON.ObjectId().toString(),
             entries: [],
           });
           userData[hubField] = hub._id;
@@ -156,7 +155,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const addDoctorAdvice = async (doctorId: string, advice: string, category: string) => {
     if (!isRealmReady) {
-      console.warn('Realm not ready, cannot add doctor advice');
+      console.warn('Database not ready, cannot add doctor advice');
       return;
     }
 
@@ -167,7 +166,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         let userData = realm.objects('UserData')[0];
         if (!userData) {
           userData = realm.create('UserData', {
-            _id: new BSON.ObjectId(),
+            _id: BSON.ObjectId().toString(),
             rephraseKey: 'default-key',
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -177,7 +176,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
 
         userData.doctorAdvices.push({
-          _id: new BSON.ObjectId(),
+          _id: BSON.ObjectId().toString(),
           doctorId,
           advice,
           timestamp: new Date(),
