@@ -1,5 +1,5 @@
 
-// Mock Realm configuration using localStorage
+// Enhanced database configuration using localStorage with MongoDB Atlas sync capabilities
 import { localDB, generateObjectId } from './localStorage';
 
 let isInitialized = false;
@@ -10,7 +10,7 @@ export const initializeRealm = async () => {
   }
 
   try {
-    console.log('Initializing local database...');
+    console.log('Initializing enhanced local database...');
     
     // Initialize collections if they don't exist
     const collections = ['UserData', 'EncryptedData', 'DataLogHub'];
@@ -21,8 +21,16 @@ export const initializeRealm = async () => {
       }
     });
 
+    // Log storage statistics
+    const stats = localDB.getStorageStats();
+    console.log('Storage usage:', {
+      used: (stats.used / 1024).toFixed(2) + 'KB',
+      total: (stats.total / 1024).toFixed(2) + 'KB',
+      percentage: ((stats.used / stats.total) * 100).toFixed(1) + '%'
+    });
+
     isInitialized = true;
-    console.log('Local database initialized successfully');
+    console.log('Enhanced local database initialized successfully');
     return Promise.resolve();
   } catch (error) {
     console.error('Failed to initialize local database:', error);
@@ -47,20 +55,46 @@ export const getRealm = () => {
       return createdDoc; // Return the full created document
     },
     write: (callback: () => void) => localDB.write(callback),
+    // Additional utility methods
+    update: (collection: string, id: string, updates: any) => localDB.update(collection, id, updates),
+    delete: (collection: string, id: string) => localDB.delete(collection, id),
+    getStats: () => localDB.getStorageStats(),
   };
 };
 
 export const closeRealm = () => {
   if (isInitialized) {
     isInitialized = false;
-    console.log('Local database closed');
+    console.log('Enhanced local database closed');
   }
 };
 
-// Mock BSON ObjectId
+// Mock BSON ObjectId replacement
 export const BSON = {
   ObjectId: () => ({
     toString: () => generateObjectId(),
     valueOf: () => generateObjectId(),
   }),
+};
+
+// Database health check
+export const checkDatabaseHealth = (): { status: string; details: any } => {
+  try {
+    const stats = localDB.getStorageStats();
+    const isHealthy = stats.used < stats.total * 0.8; // Alert if using more than 80%
+    
+    return {
+      status: isHealthy ? 'healthy' : 'warning',
+      details: {
+        ...stats,
+        isInitialized,
+        timestamp: new Date()
+      }
+    };
+  } catch (error) {
+    return {
+      status: 'error',
+      details: { error: error.message, timestamp: new Date() }
+    };
+  }
 };

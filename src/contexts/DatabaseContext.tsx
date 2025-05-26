@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { initializeRealm, getRealm, closeRealm, BSON } from '@/lib/database/mockRealmConfig';
-import { UserData, DataLogHub } from '@/lib/database/localStorage';
+import { initializeRealm, getRealm, closeRealm, BSON, checkDatabaseHealth } from '@/lib/database/mockRealmConfig';
+import { UserData, DataLogHub, SyncStatus } from '@/lib/database/localStorage';
+import { getSyncService, initializeSyncService } from '@/lib/services/syncService';
 
 interface DatabaseContextType {
   isRealmReady: boolean;
@@ -10,6 +10,9 @@ interface DatabaseContextType {
   saveEncryptedData: (data: any, category: 'mood' | 'chat' | 'health') => Promise<void>;
   getDoctorAdvices: () => any[];
   addDoctorAdvice: (doctorId: string, advice: string, category: string) => Promise<void>;
+  syncStatus: SyncStatus;
+  databaseHealth: any;
+  triggerManualSync: () => Promise<boolean>;
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
@@ -17,14 +20,25 @@ const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined
 export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isRealmReady, setIsRealmReady] = useState(false);
   const [syncPreference, setSyncPreferenceState] = useState<'local' | 'daily' | 'weekly'>('local');
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
+    isOnline: navigator.onLine,
+    lastSync: null,
+    pendingOperations: 0,
+    syncInProgress: false
+  });
+  const [databaseHealth, setDatabaseHealth] = useState<any>({});
 
   useEffect(() => {
-    const setupRealm = async () => {
+    const setupDatabase = async () => {
       try {
-        console.log('Initializing local database...');
+        console.log('Initializing enhanced database system...');
         await initializeRealm();
+        
+        // Initialize sync service (without MongoDB connection for now)
+        await initializeSyncService();
+        
         setIsRealmReady(true);
-        console.log('Local database initialized successfully');
+        console.log('Enhanced database system initialized successfully');
         
         // Load user sync preference
         const realm = getRealm();
@@ -32,20 +46,54 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         const userData = userDataArray[0];
         if (userData) {
           setSyncPreferenceState(userData.syncPreference as 'local' | 'daily' | 'weekly');
+          
+          // Start periodic sync if needed
+          const syncService = getSyncService();
+          syncService.startPeriodicSync(userData);
         }
+
+        // Check database health
+        const health = checkDatabaseHealth();
+        setDatabaseHealth(health);
+        
+        // Update sync status
+        const syncService = getSyncService();
+        setSyncStatus(syncService.getSyncStatus());
+        
       } catch (error) {
-        console.error('Failed to setup local database:', error);
+        console.error('Failed to setup enhanced database system:', error);
         setIsRealmReady(false);
       }
     };
 
-    setupRealm();
+    setupDatabase();
+
+    // Online/offline event listeners
+    const handleOnline = () => {
+      console.log('Application came online');
+      const syncService = getSyncService();
+      setSyncStatus(syncService.getSyncStatus());
+    };
+
+    const handleOffline = () => {
+      console.log('Application went offline');
+      const syncService = getSyncService();
+      setSyncStatus(syncService.getSyncStatus());
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      
       try {
+        const syncService = getSyncService();
+        syncService.cleanup();
         closeRealm();
       } catch (error) {
-        console.error('Error closing local database:', error);
+        console.error('Error cleaning up database system:', error);
       }
     };
   }, []);
@@ -72,6 +120,10 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
             (userData as any).syncPreference = preference;
             (userData as any).updatedAt = new Date();
           }
+          
+          // Update periodic sync
+          const syncService = getSyncService();
+          syncService.startPeriodicSync(userData);
         });
       } catch (error) {
         console.error('Error updating sync preference:', error);
@@ -88,14 +140,21 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       const realm = getRealm();
       
-      // Simple base64 encoding for demo (in production, use proper AES-256 encryption)
-      const encryptedPayload = btoa(JSON.stringify(data));
+      // Enhanced encryption (still using base64 for demo)
+      const encryptedPayload = btoa(JSON.stringify({
+        ...data,
+        timestamp: new Date(),
+        category,
+        version: 1
+      }));
       
       realm.write(() => {
         // Create encrypted data entry
         const encryptedData = realm.create('EncryptedData', {
           _id: BSON.ObjectId().toString(),
           encryptedPayload,
+          timestamp: new Date(),
+          category,
           _v: 1,
         });
 
@@ -137,6 +196,16 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         (userData as any).updatedAt = new Date();
       });
+      
+      // Trigger sync if needed
+      const syncService = getSyncService();
+      const userData = realm.objects('UserData')[0] as UserData;
+      if (userData && userData.syncPreference !== 'local') {
+        await syncService.syncEncryptedData(category);
+      }
+      
+      // Update sync status
+      setSyncStatus(syncService.getSyncStatus());
       
       console.log(`Saved encrypted ${category} data successfully`);
     } catch (error) {
@@ -200,6 +269,35 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
+  const triggerManualSync = async (): Promise<boolean> => {
+    if (!isRealmReady) return false;
+    
+    try {
+      const realm = getRealm();
+      const userData = realm.objects('UserData')[0] as UserData;
+      
+      if (!userData || userData.syncPreference === 'local') {
+        console.log('Manual sync skipped - local-only mode');
+        return true;
+      }
+
+      const syncService = getSyncService();
+      const success = await syncService.syncUserData(userData);
+      
+      if (success) {
+        await syncService.syncEncryptedData('mood');
+        await syncService.syncEncryptedData('chat');
+        await syncService.syncEncryptedData('health');
+      }
+      
+      setSyncStatus(syncService.getSyncStatus());
+      return success;
+    } catch (error) {
+      console.error('Error during manual sync:', error);
+      return false;
+    }
+  };
+
   return (
     <DatabaseContext.Provider value={{
       isRealmReady,
@@ -208,6 +306,9 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       saveEncryptedData,
       getDoctorAdvices,
       addDoctorAdvice,
+      syncStatus,
+      databaseHealth,
+      triggerManualSync,
     }}>
       {children}
     </DatabaseContext.Provider>
