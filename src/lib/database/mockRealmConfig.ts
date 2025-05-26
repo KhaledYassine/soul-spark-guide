@@ -43,7 +43,8 @@ export const getRealm = () => {
         ...data,
         _id: data._id || generateObjectId(),
       };
-      return localDB.create(collection, doc);
+      const createdDoc = localDB.create(collection, doc);
+      return createdDoc; // Return the full created document
     },
     write: (callback: () => void) => localDB.write(callback),
   };

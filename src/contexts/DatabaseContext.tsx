@@ -67,7 +67,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
               updatedAt: new Date(),
               syncPreference: preference,
               doctorAdvices: [],
-            });
+            }) as UserData;
           } else {
             (userData as any).syncPreference = preference;
             (userData as any).updatedAt = new Date();
@@ -110,7 +110,7 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
             updatedAt: new Date(),
             syncPreference: syncPreference,
             doctorAdvices: [],
-          });
+          }) as UserData;
         }
 
         // Get or create appropriate hub
