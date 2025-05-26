@@ -8,15 +8,15 @@ export class SyncService {
   private syncInProgress = false;
   private syncIntervals = new Map<string, NodeJS.Timeout>();
 
-  constructor(private connectionString?: string) {
-    if (connectionString) {
-      this.mongoSync = createMongoAtlasSync(connectionString);
+  constructor(private apiKey?: string) {
+    if (apiKey) {
+      this.mongoSync = createMongoAtlasSync(apiKey);
     }
   }
 
-  async initialize(connectionString?: string): Promise<boolean> {
-    if (connectionString && !this.mongoSync) {
-      this.mongoSync = createMongoAtlasSync(connectionString);
+  async initialize(apiKey?: string): Promise<boolean> {
+    if (apiKey && !this.mongoSync) {
+      this.mongoSync = createMongoAtlasSync(apiKey);
     }
 
     if (this.mongoSync) {
@@ -45,7 +45,7 @@ export class SyncService {
         // Update local record with sync timestamp
         localDB.update('UserData', userData._id, {
           lastSynced: new Date()
-        });
+        } as Partial<UserData>);
       }
 
       return success;
@@ -174,7 +174,7 @@ export const getSyncService = (): SyncService => {
   return syncServiceInstance;
 };
 
-export const initializeSyncService = async (connectionString?: string): Promise<boolean> => {
+export const initializeSyncService = async (apiKey?: string): Promise<boolean> => {
   const service = getSyncService();
-  return await service.initialize(connectionString);
+  return await service.initialize(apiKey);
 };

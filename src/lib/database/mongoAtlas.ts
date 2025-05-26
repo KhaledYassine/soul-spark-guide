@@ -1,34 +1,52 @@
 
-// MongoDB Atlas integration for cloud sync
-import { MongoClient, Db, Collection } from 'mongodb';
-import { UserData, EncryptedData, DataLogHub, encryptData, decryptData } from './localStorage';
+// MongoDB Atlas Data API integration for cloud sync (web-compatible)
+import { UserData, EncryptedData, encryptData, decryptData } from './localStorage';
 
 interface MongoConfig {
-  connectionString: string;
+  dataApiUrl: string;
+  apiKey: string;
   databaseName: string;
+  dataSource: string;
+}
+
+interface AtlasAPIResponse<T = any> {
+  document?: T;
+  documents?: T[];
+  insertedId?: string;
+  matchedCount?: number;
+  modifiedCount?: number;
 }
 
 export class MongoAtlasSync {
-  private client: MongoClient | null = null;
-  private db: Db | null = null;
+  private config: MongoConfig;
   private isConnected = false;
 
-  constructor(private config: MongoConfig) {}
+  constructor(config: MongoConfig) {
+    this.config = config;
+  }
 
   async connect(): Promise<boolean> {
     try {
-      if (this.isConnected && this.client) {
+      if (this.isConnected) {
         return true;
       }
 
-      console.log('Connecting to MongoDB Atlas...');
-      this.client = new MongoClient(this.config.connectionString);
-      await this.client.connect();
-      this.db = this.client.db(this.config.databaseName);
-      this.isConnected = true;
+      console.log('Connecting to MongoDB Atlas Data API...');
       
-      console.log('Connected to MongoDB Atlas successfully');
-      return true;
+      // Test connection with a simple find operation
+      const response = await this.makeRequest('findOne', 'userData', {
+        filter: { _id: 'test' },
+        limit: 1
+      });
+
+      if (response.ok) {
+        this.isConnected = true;
+        console.log('Connected to MongoDB Atlas Data API successfully');
+        return true;
+      } else {
+        console.error('Failed to connect to MongoDB Atlas Data API');
+        return false;
+      }
     } catch (error) {
       console.error('Failed to connect to MongoDB Atlas:', error);
       this.isConnected = false;
@@ -37,20 +55,26 @@ export class MongoAtlasSync {
   }
 
   async disconnect(): Promise<void> {
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
-      this.db = null;
-      this.isConnected = false;
-      console.log('Disconnected from MongoDB Atlas');
-    }
+    this.isConnected = false;
+    console.log('Disconnected from MongoDB Atlas Data API');
   }
 
-  private getCollection<T>(name: string): Collection<T> {
-    if (!this.db) {
-      throw new Error('Database not connected');
-    }
-    return this.db.collection<T>(name);
+  private async makeRequest(action: string, collection: string, data: any): Promise<Response> {
+    const url = `${this.config.dataApiUrl}/action/${action}`;
+    
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': this.config.apiKey,
+      },
+      body: JSON.stringify({
+        dataSource: this.config.dataSource,
+        database: this.config.databaseName,
+        collection,
+        ...data
+      })
+    });
   }
 
   async syncUserData(userData: UserData): Promise<boolean> {
@@ -59,8 +83,6 @@ export class MongoAtlasSync {
         await this.connect();
       }
 
-      const collection = this.getCollection<UserData>('userData');
-      
       // Encrypt sensitive data before syncing
       const encryptedUserData = {
         ...userData,
@@ -71,14 +93,19 @@ export class MongoAtlasSync {
         lastSynced: new Date()
       };
 
-      await collection.replaceOne(
-        { _id: userData._id },
-        encryptedUserData,
-        { upsert: true }
-      );
+      const response = await this.makeRequest('replaceOne', 'userData', {
+        filter: { _id: userData._id },
+        replacement: encryptedUserData,
+        upsert: true
+      });
 
-      console.log('User data synced to MongoDB Atlas');
-      return true;
+      if (response.ok) {
+        console.log('User data synced to MongoDB Atlas');
+        return true;
+      } else {
+        console.error('Failed to sync user data:', await response.text());
+        return false;
+      }
     } catch (error) {
       console.error('Error syncing user data:', error);
       return false;
@@ -91,23 +118,27 @@ export class MongoAtlasSync {
         await this.connect();
       }
 
-      const collection = this.getCollection<EncryptedData>('encryptedData');
-      
-      // Batch upsert encrypted data
-      const operations = data.map(item => ({
-        replaceOne: {
-          filter: { _id: item._id },
-          replacement: { ...item, lastSynced: new Date() },
-          upsert: true
-        }
-      }));
-
-      if (operations.length > 0) {
-        await collection.bulkWrite(operations);
-        console.log(`Synced ${operations.length} encrypted data items to MongoDB Atlas`);
+      if (data.length === 0) {
+        return true;
       }
 
-      return true;
+      // Use insertMany for bulk operations
+      const dataWithSync = data.map(item => ({
+        ...item,
+        lastSynced: new Date()
+      }));
+
+      const response = await this.makeRequest('insertMany', 'encryptedData', {
+        documents: dataWithSync
+      });
+
+      if (response.ok) {
+        console.log(`Synced ${data.length} encrypted data items to MongoDB Atlas`);
+        return true;
+      } else {
+        console.error('Failed to sync encrypted data:', await response.text());
+        return false;
+      }
     } catch (error) {
       console.error('Error syncing encrypted data:', error);
       return false;
@@ -120,18 +151,27 @@ export class MongoAtlasSync {
         await this.connect();
       }
 
-      const collection = this.getCollection<UserData>('userData');
-      const userData = await collection.findOne({ _id: userId });
+      const response = await this.makeRequest('findOne', 'userData', {
+        filter: { _id: userId }
+      });
 
-      if (userData) {
-        // Decrypt sensitive data after fetching
-        userData.doctorAdvices = userData.doctorAdvices.map(advice => ({
-          ...advice,
-          advice: decryptData(advice.advice)
-        }));
+      if (response.ok) {
+        const result: AtlasAPIResponse<UserData> = await response.json();
+        const userData = result.document;
+
+        if (userData) {
+          // Decrypt sensitive data after fetching
+          userData.doctorAdvices = userData.doctorAdvices.map(advice => ({
+            ...advice,
+            advice: decryptData(advice.advice)
+          }));
+        }
+
+        return userData || null;
+      } else {
+        console.error('Failed to fetch user data:', await response.text());
+        return null;
       }
-
-      return userData;
     } catch (error) {
       console.error('Error fetching user data:', error);
       return null;
@@ -144,9 +184,11 @@ export class MongoAtlasSync {
 }
 
 // Factory function to create MongoDB Atlas sync instance
-export const createMongoAtlasSync = (connectionString: string): MongoAtlasSync => {
+export const createMongoAtlasSync = (apiKey: string, dataApiUrl?: string): MongoAtlasSync => {
   return new MongoAtlasSync({
-    connectionString,
-    databaseName: 'mental_health_app'
+    dataApiUrl: dataApiUrl || 'https://data.mongodb-api.com/app/data-yourapp/endpoint/data/v1',
+    apiKey,
+    databaseName: 'mental_health_app',
+    dataSource: 'Cluster0'
   });
 };
