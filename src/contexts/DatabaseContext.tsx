@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { initializeRealm, getRealm, closeRealm, BSON } from '@/lib/database/mockRealmConfig';
+import { UserData, DataLogHub } from '@/lib/database/localStorage';
 
 interface DatabaseContextType {
   isRealmReady: boolean;
@@ -27,7 +28,8 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         // Load user sync preference
         const realm = getRealm();
-        const userData = realm.objects('UserData')[0];
+        const userDataArray = realm.objects('UserData') as UserData[];
+        const userData = userDataArray[0];
         if (userData) {
           setSyncPreferenceState(userData.syncPreference as 'local' | 'daily' | 'weekly');
         }
@@ -55,7 +57,8 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         const realm = getRealm();
         realm.write(() => {
-          let userData = realm.objects('UserData')[0];
+          const userDataArray = realm.objects('UserData') as UserData[];
+          let userData = userDataArray[0];
           if (!userData) {
             userData = realm.create('UserData', {
               _id: BSON.ObjectId().toString(),
@@ -66,8 +69,8 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
               doctorAdvices: [],
             });
           } else {
-            userData.syncPreference = preference;
-            userData.updatedAt = new Date();
+            (userData as any).syncPreference = preference;
+            (userData as any).updatedAt = new Date();
           }
         });
       } catch (error) {
@@ -97,7 +100,8 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
 
         // Get or create user data
-        let userData = realm.objects('UserData')[0];
+        const userDataArray = realm.objects('UserData') as UserData[];
+        let userData = userDataArray[0];
         if (!userData) {
           userData = realm.create('UserData', {
             _id: BSON.ObjectId().toString(),
@@ -110,28 +114,28 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
 
         // Get or create appropriate hub
-        const hubField = `${category}LogHubId`;
-        let hubId = userData[hubField];
+        const hubField = `${category}LogHubId` as keyof UserData;
+        let hubId = (userData as any)[hubField];
         
         if (!hubId) {
           const hub = realm.create('DataLogHub', {
             _id: BSON.ObjectId().toString(),
             entries: [],
-          });
-          userData[hubField] = hub._id;
+          }) as DataLogHub;
+          (userData as any)[hubField] = hub._id;
           hubId = hub._id;
         }
 
         // Add entry to hub
-        const hub = realm.objectForPrimaryKey('DataLogHub', hubId);
-        if (hub) {
+        const hub = realm.objectForPrimaryKey('DataLogHub', hubId) as DataLogHub;
+        if (hub && hub.entries) {
           hub.entries.push({
             _id: encryptedData._id,
             timestamp: new Date(),
           });
         }
 
-        userData.updatedAt = new Date();
+        (userData as any).updatedAt = new Date();
       });
       
       console.log(`Saved encrypted ${category} data successfully`);
@@ -145,7 +149,8 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     try {
       const realm = getRealm();
-      const userData = realm.objects('UserData')[0];
+      const userDataArray = realm.objects('UserData') as UserData[];
+      const userData = userDataArray[0];
       return userData?.doctorAdvices ? Array.from(userData.doctorAdvices) : [];
     } catch (error) {
       console.error('Error getting doctor advices:', error);
@@ -163,7 +168,8 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       const realm = getRealm();
       
       realm.write(() => {
-        let userData = realm.objects('UserData')[0];
+        const userDataArray = realm.objects('UserData') as UserData[];
+        let userData = userDataArray[0];
         if (!userData) {
           userData = realm.create('UserData', {
             _id: BSON.ObjectId().toString(),
@@ -172,18 +178,20 @@ export const DatabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
             updatedAt: new Date(),
             syncPreference: syncPreference,
             doctorAdvices: [],
+          }) as UserData;
+        }
+
+        if (userData.doctorAdvices) {
+          userData.doctorAdvices.push({
+            _id: BSON.ObjectId().toString(),
+            doctorId,
+            advice,
+            timestamp: new Date(),
+            category,
           });
         }
 
-        userData.doctorAdvices.push({
-          _id: BSON.ObjectId().toString(),
-          doctorId,
-          advice,
-          timestamp: new Date(),
-          category,
-        });
-
-        userData.updatedAt = new Date();
+        (userData as any).updatedAt = new Date();
       });
       
       console.log('Added doctor advice successfully');
