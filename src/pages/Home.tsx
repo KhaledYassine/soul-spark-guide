@@ -8,8 +8,13 @@ import { useHealth } from '@/contexts/HealthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useDatabase } from '@/contexts/DatabaseContext';
 import { useNavigate } from 'react-router-dom';
-import HealthStat from '@/components/HealthStat';
+import HealthMetrics from '@/components/HealthMetrics';
 import StatusSlider from '@/components/StatusSlider';
+import MoodTracker from '@/components/MoodTracker';
+import BreathingExercise from '@/components/BreathingExercise';
+import WeeklyChart from '@/components/WeeklyChart';
+import GratitudeJournal from '@/components/GratitudeJournal';
+import WellnessTips from '@/components/WellnessTips';
 import { MessageSquare, Settings, Bell, Database } from 'lucide-react';
 
 const Home: React.FC = () => {
@@ -39,7 +44,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6 pb-20">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -89,44 +94,69 @@ const Home: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Health Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <HealthStat type="heartRate" value={healthData.heartRate} />
-          <HealthStat type="steps" value={healthData.steps} />
-        </div>
+        {/* Health Metrics */}
+        <HealthMetrics
+          heartRate={healthData.heartRate}
+          steps={healthData.steps}
+          energy={healthData.energy}
+          happiness={healthData.happiness}
+        />
 
-        {/* Status Check-in */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-mental-purple">Status Check-in</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <StatusSlider
-              label="Energy Level"
-              value={healthData.energy}
-              onChange={(value) => handleStatusUpdate('energy', value)}
-              colorClass="bg-yellow-100 text-yellow-600"
-            />
-            <StatusSlider
-              label="Happiness"
-              value={healthData.happiness}
-              onChange={(value) => handleStatusUpdate('happiness', value)}
-              colorClass="bg-green-100 text-green-600"
-            />
-            <StatusSlider
-              label="Productivity"
-              value={healthData.productivity}
-              onChange={(value) => handleStatusUpdate('productivity', value)}
-              colorClass="bg-blue-100 text-blue-600"
-            />
-            <StatusSlider
-              label="Stress Level"
-              value={healthData.stress}
-              onChange={(value) => handleStatusUpdate('stress', value)}
-              colorClass="bg-red-100 text-red-600"
-            />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Status Check-in */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-mental-purple">Status Check-in</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <StatusSlider
+                  label="Energy Level"
+                  value={healthData.energy}
+                  onChange={(value) => handleStatusUpdate('energy', value)}
+                  colorClass="bg-yellow-100 text-yellow-600"
+                />
+                <StatusSlider
+                  label="Happiness"
+                  value={healthData.happiness}
+                  onChange={(value) => handleStatusUpdate('happiness', value)}
+                  colorClass="bg-green-100 text-green-600"
+                />
+                <StatusSlider
+                  label="Productivity"
+                  value={healthData.productivity}
+                  onChange={(value) => handleStatusUpdate('productivity', value)}
+                  colorClass="bg-blue-100 text-blue-600"
+                />
+                <StatusSlider
+                  label="Stress Level"
+                  value={healthData.stress}
+                  onChange={(value) => handleStatusUpdate('stress', value)}
+                  colorClass="bg-red-100 text-red-600"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Mood Tracker */}
+            <MoodTracker />
+
+            {/* Gratitude Journal */}
+            <GratitudeJournal />
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Weekly Chart */}
+            <WeeklyChart />
+
+            {/* Breathing Exercise */}
+            <BreathingExercise />
+
+            {/* Wellness Tips */}
+            <WellnessTips />
+          </div>
+        </div>
 
         {/* Chat Assistant */}
         <Card>

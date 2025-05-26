@@ -52,10 +52,9 @@ export const getRealm = () => {
         _id: data._id || generateObjectId(),
       };
       const createdDoc = localDB.create(collection, doc);
-      return createdDoc; // Return the full created document
+      return createdDoc;
     },
     write: (callback: () => void) => localDB.write(callback),
-    // Additional utility methods
     update: (collection: string, id: string, updates: any) => localDB.update(collection, id, updates),
     delete: (collection: string, id: string) => localDB.delete(collection, id),
     getStats: () => localDB.getStorageStats(),
@@ -81,7 +80,7 @@ export const BSON = {
 export const checkDatabaseHealth = (): { status: string; details: any } => {
   try {
     const stats = localDB.getStorageStats();
-    const isHealthy = stats.used < stats.total * 0.8; // Alert if using more than 80%
+    const isHealthy = stats.used < stats.total * 0.8;
     
     return {
       status: isHealthy ? 'healthy' : 'warning',

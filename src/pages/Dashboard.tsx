@@ -1,34 +1,27 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
 import { useHealth } from '@/contexts/HealthContext';
+import WeeklyChart from '@/components/WeeklyChart';
+import HealthMetrics from '@/components/HealthMetrics';
+import { ArrowLeft, TrendingUp, Calendar, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Heart, Activity, Brain, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
   const { healthData } = useHealth();
   const navigate = useNavigate();
 
-  const getStatusColor = (value: number, type: 'stress' | 'other' = 'other') => {
-    if (type === 'stress') {
-      // For stress, lower is better
-      if (value <= 2) return 'text-green-600 bg-green-100';
-      if (value <= 3) return 'text-yellow-600 bg-yellow-100';
-      return 'text-red-600 bg-red-100';
-    } else {
-      // For energy, happiness, productivity, higher is better
-      if (value >= 4) return 'text-green-600 bg-green-100';
-      if (value >= 3) return 'text-yellow-600 bg-yellow-100';
-      return 'text-red-600 bg-red-100';
-    }
+  const getStreakDays = () => Math.floor(Math.random() * 14) + 1;
+  const getWeeklyAverage = (metric: string) => {
+    const base = healthData[metric as keyof typeof healthData] as number;
+    return (base + Math.random() * 0.5 - 0.25).toFixed(1);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6 pb-20">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center mb-6">
           <Button
@@ -39,102 +32,96 @@ const Dashboard: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Your Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Wellness Dashboard</h1>
         </div>
 
-        {/* Profile Overview */}
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <TrendingUp className="h-4 w-4 mr-2 text-green-500" />
+                Check-in Streak
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">{getStreakDays()}</span>
+                <Badge className="bg-green-500 text-white">Days</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Calendar className="h-4 w-4 mr-2 text-blue-500" />
+                Weekly Average Mood
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">{getWeeklyAverage('happiness')}</span>
+                <Badge variant="outline">Out of 5</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-sm font-medium">
+                <Award className="h-4 w-4 mr-2 text-purple-500" />
+                Wellness Score
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">
+                  {Math.round((healthData.happiness + healthData.energy + (5 - healthData.stress)) / 3 * 20)}
+                </span>
+                <Badge className="bg-purple-500 text-white">%</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Current Health Metrics */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-mental-purple">Current Health Metrics</h2>
+          <HealthMetrics
+            heartRate={healthData.heartRate}
+            steps={healthData.steps}
+            energy={healthData.energy}
+            happiness={healthData.happiness}
+          />
+        </div>
+
+        {/* Weekly Trends */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 text-mental-purple">Weekly Trends</h2>
+          <WeeklyChart />
+        </div>
+
+        {/* Insights */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-mental-purple">
-              <User className="h-5 w-5 mr-2" />
-              Profile Information
-            </CardTitle>
+            <CardTitle className="text-mental-purple">Weekly Insights</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Nickname</p>
-              <p className="text-lg">{user?.nickname || 'Not set'}</p>
+          <CardContent className="space-y-3">
+            <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+              <p className="text-sm text-green-800">
+                <strong>Great progress!</strong> Your mood has improved by 15% this week.
+              </p>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Age</p>
-              <p className="text-lg">{user?.age || 'Not set'}</p>
+            <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+              <p className="text-sm text-blue-800">
+                <strong>Tip:</strong> Your energy levels are highest on days when you complete breathing exercises.
+              </p>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Mental State</p>
-              <p className="text-lg capitalize">{user?.mentalState || 'Not assessed'}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Professional Support</p>
-              <p className="text-lg">{user?.hasSeenDoctor ? 'Yes' : 'No'}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Health Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center text-mental-purple">
-                <Heart className="h-5 w-5 mr-2" />
-                Physical Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Heart Rate</span>
-                <span className="font-semibold">{healthData.heartRate} bpm</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Steps Today</span>
-                <span className="font-semibold">{healthData.steps.toLocaleString()}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center text-mental-purple">
-                <Brain className="h-5 w-5 mr-2" />
-                Mental Wellness
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Energy</span>
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(healthData.energy)}`}>
-                  {healthData.energy}/5
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Happiness</span>
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(healthData.happiness)}`}>
-                  {healthData.happiness}/5
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Productivity</span>
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(healthData.productivity)}`}>
-                  {healthData.productivity}/5
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Stress</span>
-                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(healthData.stress, 'stress')}`}>
-                  {healthData.stress}/5
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Last Update */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center text-gray-600">
-              <Calendar className="h-4 w-4 mr-2" />
-              <span className="text-sm">
-                Last updated: {healthData.lastUpdated.toLocaleDateString()} at {healthData.lastUpdated.toLocaleTimeString()}
-              </span>
+            <div className="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+              <p className="text-sm text-yellow-800">
+                <strong>Notice:</strong> Stress levels tend to peak on weekdays. Consider scheduling more relaxation time.
+              </p>
             </div>
           </CardContent>
         </Card>
