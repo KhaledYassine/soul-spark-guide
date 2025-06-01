@@ -11,7 +11,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { DatabaseProvider } from "@/contexts/DatabaseContext";
 import { DoctorAuthProvider } from "@/contexts/DoctorAuthContext";
 import { UserModeProvider } from "@/contexts/UserModeContext";
-import BottomTabBar from "@/components/BottomTabBar";
+import EnhancedNavigation from "@/components/EnhancedNavigation";
 import Login from "./pages/Login";
 import Assessment from "./pages/Assessment";
 import Home from "./pages/Home";
@@ -52,7 +52,7 @@ const App = () => (
                           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
-                        <BottomTabBar />
+                        <EnhancedNavigation />
                       </div>
                     </BrowserRouter>
                   </ChatProvider>
