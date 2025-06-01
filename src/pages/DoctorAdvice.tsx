@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProfessionalNotes from '@/components/doctor/ProfessionalNotes';
+import TreatmentPlan from '@/components/doctor/TreatmentPlan';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealth } from '@/contexts/HealthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { useDatabase } from '@/contexts/DatabaseContext';
+import { useUserMode } from '@/contexts/UserModeContext';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, Stethoscope, Mail, Phone, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Share2, Stethoscope, Mail, Phone, MessageSquare, FileText, Video, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 const DoctorAdvice: React.FC = () => {
@@ -17,6 +20,7 @@ const DoctorAdvice: React.FC = () => {
   const { healthData } = useHealth();
   const { chatSessions } = useChat();
   const { syncPreference, setSyncPreference, getDoctorAdvices, saveEncryptedData } = useDatabase();
+  const { isDoctor } = useUserMode();
   const navigate = useNavigate();
   
   const [doctorEmail, setDoctorEmail] = useState('');
@@ -76,7 +80,7 @@ const DoctorAdvice: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6 pb-20">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center mb-6">
           <Button
@@ -87,178 +91,189 @@ const DoctorAdvice: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Doctor Advice & Data Sharing</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isDoctor ? 'Professional Practice Tools' : 'Doctor Advice & Data Sharing'}
+          </h1>
         </div>
 
-        <Tabs defaultValue="share" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="share">Share Data</TabsTrigger>
+        <Tabs defaultValue={isDoctor ? "professional" : "share"} className="space-y-6">
+          <TabsList className={`grid w-full ${isDoctor ? 'grid-cols-4' : 'grid-cols-2'}`}>
+            {!isDoctor && <TabsTrigger value="share">Share Data</TabsTrigger>}
             <TabsTrigger value="advice">Doctor Advice</TabsTrigger>
+            {isDoctor && (
+              <>
+                <TabsTrigger value="professional">Professional Tools</TabsTrigger>
+                <TabsTrigger value="communication">Communication</TabsTrigger>
+                <TabsTrigger value="export">Data Export</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
-          <TabsContent value="share" className="space-y-6">
-            {/* Data Sync Preference */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-mental-purple">Data Synchronization</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600">Choose how to handle your data:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    {[
-                      { value: 'local', label: 'Keep Local Only' },
-                      { value: 'daily', label: 'Sync Daily' },
-                      { value: 'weekly', label: 'Sync Weekly' }
-                    ].map(option => (
-                      <Button
-                        key={option.value}
-                        variant={syncPreference === option.value ? 'default' : 'outline'}
-                        onClick={() => setSyncPreference(option.value as any)}
-                        className="text-sm"
-                      >
-                        {option.label}
-                      </Button>
-                    ))}
+          {!isDoctor && (
+            <TabsContent value="share" className="space-y-6">
+              {/* Data Sync Preference */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-mental-purple">Data Synchronization</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Choose how to handle your data:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {[
+                        { value: 'local', label: 'Keep Local Only' },
+                        { value: 'daily', label: 'Sync Daily' },
+                        { value: 'weekly', label: 'Sync Weekly' }
+                      ].map(option => (
+                        <Button
+                          key={option.value}
+                          variant={syncPreference === option.value ? 'default' : 'outline'}
+                          onClick={() => setSyncPreference(option.value as any)}
+                          className="text-sm"
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Doctor Contact Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-mental-purple">
-                  <Stethoscope className="h-5 w-5 mr-2" />
-                  Healthcare Provider Contact
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Doctor's Email
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <Input
-                      type="email"
-                      placeholder="doctor@example.com"
-                      value={doctorEmail}
-                      onChange={(e) => setDoctorEmail(e.target.value)}
-                    />
+              {/* Doctor Contact Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-mental-purple">
+                    <Stethoscope className="h-5 w-5 mr-2" />
+                    Healthcare Provider Contact
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Doctor's Email
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <Input
+                        type="email"
+                        placeholder="doctor@example.com"
+                        value={doctorEmail}
+                        onChange={(e) => setDoctorEmail(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Doctor's Phone (Optional)
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <Input
-                      type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      value={doctorPhone}
-                      onChange={(e) => setDoctorPhone(e.target.value)}
-                    />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Doctor's Phone (Optional)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <Input
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        value={doctorPhone}
+                        onChange={(e) => setDoctorPhone(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Data Sharing Options */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-mental-purple">
-                  <Share2 className="h-5 w-5 mr-2" />
-                  Select Data to Share
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="moodLogs"
-                      checked={shareOptions.moodLogs}
-                      onCheckedChange={() => handleShareOptionChange('moodLogs')}
-                    />
-                    <div>
-                      <label htmlFor="moodLogs" className="text-sm font-medium">
-                        Mood Logs & Status Check-ins
-                      </label>
-                      <p className="text-sm text-gray-600">
-                        Share your daily energy, happiness, productivity, and stress ratings
-                      </p>
-                      <div className="mt-2 text-xs text-gray-500">
-                        Current data: Energy {healthData.energy}/5, Happiness {healthData.happiness}/5, 
-                        Productivity {healthData.productivity}/5, Stress {healthData.stress}/5
+              {/* Data Sharing Options */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-mental-purple">
+                    <Share2 className="h-5 w-5 mr-2" />
+                    Select Data to Share
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="moodLogs"
+                        checked={shareOptions.moodLogs}
+                        onCheckedChange={() => handleShareOptionChange('moodLogs')}
+                      />
+                      <div>
+                        <label htmlFor="moodLogs" className="text-sm font-medium">
+                          Mood Logs & Status Check-ins
+                        </label>
+                        <p className="text-sm text-gray-600">
+                          Share your daily energy, happiness, productivity, and stress ratings
+                        </p>
+                        <div className="mt-2 text-xs text-gray-500">
+                          Current data: Energy {healthData.energy}/5, Happiness {healthData.happiness}/5, 
+                          Productivity {healthData.productivity}/5, Stress {healthData.stress}/5
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="healthRecords"
+                        checked={shareOptions.healthRecords}
+                        onCheckedChange={() => handleShareOptionChange('healthRecords')}
+                      />
+                      <div>
+                        <label htmlFor="healthRecords" className="text-sm font-medium">
+                          Health Records & Metrics
+                        </label>
+                        <p className="text-sm text-gray-600">
+                          Share your physical health data including heart rate and activity levels
+                        </p>
+                        <div className="mt-2 text-xs text-gray-500">
+                          Current data: Heart Rate {healthData.heartRate} bpm, Steps {healthData.steps.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="chatLogs"
+                        checked={shareOptions.chatLogs}
+                        onCheckedChange={() => handleShareOptionChange('chatLogs')}
+                      />
+                      <div>
+                        <label htmlFor="chatLogs" className="text-sm font-medium">
+                          Mental Health Assistant Conversations
+                        </label>
+                        <p className="text-sm text-gray-600">
+                          Share your conversations with the AI assistant for mental health insights
+                        </p>
+                        <div className="mt-2 text-xs text-gray-500">
+                          {chatSessions.length} conversation(s) available
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="healthRecords"
-                      checked={shareOptions.healthRecords}
-                      onCheckedChange={() => handleShareOptionChange('healthRecords')}
-                    />
-                    <div>
-                      <label htmlFor="healthRecords" className="text-sm font-medium">
-                        Health Records & Metrics
-                      </label>
-                      <p className="text-sm text-gray-600">
-                        Share your physical health data including heart rate and activity levels
-                      </p>
-                      <div className="mt-2 text-xs text-gray-500">
-                        Current data: Heart Rate {healthData.heartRate} bpm, Steps {healthData.steps.toLocaleString()}
-                      </div>
-                    </div>
+                  <div className="pt-4 border-t">
+                    <Button
+                      onClick={handleShareData}
+                      className="bg-mental-purple hover:bg-mental-darkPurple text-white w-full"
+                    >
+                      Share Selected Data with Healthcare Provider
+                    </Button>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="chatLogs"
-                      checked={shareOptions.chatLogs}
-                      onCheckedChange={() => handleShareOptionChange('chatLogs')}
-                    />
-                    <div>
-                      <label htmlFor="chatLogs" className="text-sm font-medium">
-                        Mental Health Assistant Conversations
-                      </label>
-                      <p className="text-sm text-gray-600">
-                        Share your conversations with the AI assistant for mental health insights
-                      </p>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {chatSessions.length} conversation(s) available
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <Button
-                    onClick={handleShareData}
-                    className="bg-mental-purple hover:bg-mental-darkPurple text-white w-full"
-                  >
-                    Share Selected Data with Healthcare Provider
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Privacy Notice */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Privacy & Security Notice</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Your data is encrypted using AES-256 encryption before storage. 
-                  {syncPreference === 'local' 
-                    ? ' All data stays on your device until you choose to share it.'
-                    : ` Data will be synced ${syncPreference} to MongoDB Atlas with end-to-end encryption.`
-                  } You can revoke access at any time by contacting your healthcare provider directly.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              {/* Privacy Notice */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Privacy & Security Notice</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Your data is encrypted using AES-256 encryption before storage. 
+                    {syncPreference === 'local' 
+                      ? ' All data stays on your device until you choose to share it.'
+                      : ` Data will be synced ${syncPreference} to MongoDB Atlas with end-to-end encryption.`
+                    } You can revoke access at any time by contacting your healthcare provider directly.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="advice" className="space-y-6">
             <Card>
@@ -298,6 +313,101 @@ const DoctorAdvice: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {isDoctor && (
+            <>
+              <TabsContent value="professional" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <ProfessionalNotes />
+                  <TreatmentPlan />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="communication" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <MessageSquare className="h-5 w-5 mr-2 text-blue-500" />
+                        Communication Tools
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Button className="w-full justify-start">
+                        <Mail className="h-4 w-4 mr-2" />
+                        Send Secure Message
+                      </Button>
+                      <Button className="w-full justify-start" variant="outline">
+                        <Video className="h-4 w-4 mr-2" />
+                        Schedule Video Call
+                      </Button>
+                      <Button className="w-full justify-start" variant="outline">
+                        <Phone className="h-4 w-4 mr-2" />
+                        Voice Consultation
+                      </Button>
+                      <Button className="w-full justify-start" variant="outline">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Book Appointment
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Patient Progress Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <h4 className="font-medium text-green-800">Improvements</h4>
+                          <p className="text-sm text-green-600">Anxiety levels decreased by 25%</p>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <h4 className="font-medium text-blue-800">Goals Met</h4>
+                          <p className="text-sm text-blue-600">Sleep quality improved significantly</p>
+                        </div>
+                        <div className="p-3 bg-orange-50 rounded-lg">
+                          <h4 className="font-medium text-orange-800">Areas of Focus</h4>
+                          <p className="text-sm text-orange-600">Social engagement needs attention</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="export" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-purple-500" />
+                      Data Export & Portability
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Button variant="outline" className="h-20 flex-col">
+                        <FileText className="h-6 w-6 mb-2" />
+                        Export Session Notes
+                      </Button>
+                      <Button variant="outline" className="h-20 flex-col">
+                        <FileText className="h-6 w-6 mb-2" />
+                        Generate Progress Report
+                      </Button>
+                      <Button variant="outline" className="h-20 flex-col">
+                        <FileText className="h-6 w-6 mb-2" />
+                        Treatment Plan PDF
+                      </Button>
+                      <Button variant="outline" className="h-20 flex-col">
+                        <FileText className="h-6 w-6 mb-2" />
+                        Complete Patient Summary
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </div>

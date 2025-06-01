@@ -2,15 +2,23 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import WeeklyChart from '@/components/WeeklyChart';
 import HealthMetrics from '@/components/HealthMetrics';
 import SmartNotifications from '@/components/SmartNotifications';
 import WellnessScore from '@/components/WellnessScore';
+import MentalHealthRisk from '@/components/MentalHealthRisk';
+import CommunitySupport from '@/components/CommunitySupport';
 import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 import PersonalizedInsights from '@/components/PersonalizedInsights';
-import { BarChart3, Bell, Star, Brain, TrendingUp } from 'lucide-react';
+import ProfessionalNotes from '@/components/doctor/ProfessionalNotes';
+import TreatmentPlan from '@/components/doctor/TreatmentPlan';
+import { useUserMode } from '@/contexts/UserModeContext';
+import { BarChart3, Bell, Star, Brain, TrendingUp, Users, Stethoscope } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
+  const { userMode, setUserMode, isDoctor } = useUserMode();
+
   // Mock data - in real app this would come from your health context/database
   const mockHealthData = {
     heartRate: 72,
@@ -31,20 +39,59 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const mockMentalHealthData = {
+    depressionRisk: 35,
+    anxietyRisk: 45,
+    overallRisk: 'Moderate' as const,
+    riskFactors: [
+      'Sleep disturbances (< 6 hours)',
+      'Low social interaction',
+      'High stress levels'
+    ],
+    protectiveFactors: [
+      'Regular exercise routine',
+      'Strong support network',
+      'Consistent therapy attendance'
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white p-6 pb-20">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Mental Health Dashboard
-          </h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isDoctor ? 'Professional Dashboard' : 'Mental Health Dashboard'}
+            </h1>
+            <div className="flex gap-2">
+              <Button
+                variant={userMode === 'patient' ? 'default' : 'outline'}
+                onClick={() => setUserMode('patient')}
+                size="sm"
+              >
+                <Users className="h-4 w-4 mr-1" />
+                Patient View
+              </Button>
+              <Button
+                variant={userMode === 'doctor' ? 'default' : 'outline'}
+                onClick={() => setUserMode('doctor')}
+                size="sm"
+              >
+                <Stethoscope className="h-4 w-4 mr-1" />
+                Doctor View
+              </Button>
+            </div>
+          </div>
           <p className="text-gray-600">
-            Track your wellness journey with detailed insights and analytics
+            {isDoctor 
+              ? 'Professional tools and patient management features'
+              : 'Track your wellness journey with detailed insights and analytics'
+            }
           </p>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className={`grid w-full ${isDoctor ? 'grid-cols-6' : 'grid-cols-6'}`}>
             <TabsTrigger value="overview" className="flex items-center">
               <BarChart3 className="h-4 w-4 mr-1" />
               Overview
@@ -61,6 +108,10 @@ const Dashboard: React.FC = () => {
               <Star className="h-4 w-4 mr-1" />
               Wellness
             </TabsTrigger>
+            <TabsTrigger value="community" className="flex items-center">
+              <Users className="h-4 w-4 mr-1" />
+              Community
+            </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center">
               <Bell className="h-4 w-4 mr-1" />
               Alerts
@@ -72,40 +123,50 @@ const Dashboard: React.FC = () => {
               <div className="lg:col-span-2">
                 <WeeklyChart />
               </div>
-              <div>
+              <div className="space-y-6">
                 <WellnessScore {...mockWellnessData} />
+                {!isDoctor && <MentalHealthRisk {...mockMentalHealthData} />}
               </div>
             </div>
             
             <HealthMetrics {...mockHealthData} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PersonalizedInsights />
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button className="p-4 bg-blue-50 rounded-lg text-left hover:bg-blue-100 transition-colors">
-                      <div className="font-medium text-blue-800">Log Mood</div>
-                      <div className="text-sm text-blue-600">Track how you're feeling</div>
-                    </button>
-                    <button className="p-4 bg-green-50 rounded-lg text-left hover:bg-green-100 transition-colors">
-                      <div className="font-medium text-green-800">Start Exercise</div>
-                      <div className="text-sm text-green-600">Begin a workout session</div>
-                    </button>
-                    <button className="p-4 bg-purple-50 rounded-lg text-left hover:bg-purple-100 transition-colors">
-                      <div className="font-medium text-purple-800">Meditation</div>
-                      <div className="text-sm text-purple-600">Practice mindfulness</div>
-                    </button>
-                    <button className="p-4 bg-orange-50 rounded-lg text-left hover:bg-orange-100 transition-colors">
-                      <div className="font-medium text-orange-800">Chat Assistant</div>
-                      <div className="text-sm text-orange-600">Get AI support</div>
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
+              {isDoctor ? (
+                <>
+                  <ProfessionalNotes />
+                  <TreatmentPlan />
+                </>
+              ) : (
+                <>
+                  <PersonalizedInsights />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button className="p-4 bg-blue-50 rounded-lg text-left hover:bg-blue-100 transition-colors">
+                          <div className="font-medium text-blue-800">Log Mood</div>
+                          <div className="text-sm text-blue-600">Track how you're feeling</div>
+                        </button>
+                        <button className="p-4 bg-green-50 rounded-lg text-left hover:bg-green-100 transition-colors">
+                          <div className="font-medium text-green-800">Start Exercise</div>
+                          <div className="text-sm text-green-600">Begin a workout session</div>
+                        </button>
+                        <button className="p-4 bg-purple-50 rounded-lg text-left hover:bg-purple-100 transition-colors">
+                          <div className="font-medium text-purple-800">Meditation</div>
+                          <div className="text-sm text-purple-600">Practice mindfulness</div>
+                        </button>
+                        <button className="p-4 bg-orange-50 rounded-lg text-left hover:bg-orange-100 transition-colors">
+                          <div className="font-medium text-orange-800">Chat Assistant</div>
+                          <div className="text-sm text-orange-600">Get AI support</div>
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
             </div>
           </TabsContent>
 
@@ -116,6 +177,7 @@ const Dashboard: React.FC = () => {
           <TabsContent value="insights">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PersonalizedInsights />
+              {!isDoctor && <MentalHealthRisk {...mockMentalHealthData} />}
               <Card>
                 <CardHeader>
                   <CardTitle>Goal Progress</CardTitle>
@@ -169,6 +231,13 @@ const Dashboard: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="community">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CommunitySupport />
+              {isDoctor && <TreatmentPlan />}
             </div>
           </TabsContent>
 
