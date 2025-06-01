@@ -10,6 +10,8 @@ import PatientDetailView from '@/components/doctor/PatientDetailView';
 import { useDoctorAuth } from '@/contexts/DoctorAuthContext';
 import { Search, Users, AlertTriangle, TrendingUp, Calendar } from 'lucide-react';
 
+type RiskLevel = 'Low' | 'Medium' | 'High' | 'Critical';
+
 const DoctorDashboard: React.FC = () => {
   const { doctor, isAuthenticated } = useDoctorAuth();
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
@@ -22,7 +24,7 @@ const DoctorDashboard: React.FC = () => {
       name: 'Sarah Johnson',
       age: 28,
       lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      riskLevel: 'High' as const,
+      riskLevel: 'High' as RiskLevel,
       conditions: ['Severe Anxiety', 'Depression'],
       lastMoodScore: 2,
       lastEnergyScore: 2,
@@ -34,7 +36,7 @@ const DoctorDashboard: React.FC = () => {
       name: 'Michael Chen',
       age: 34,
       lastUpdate: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      riskLevel: 'Medium' as const,
+      riskLevel: 'Medium' as RiskLevel,
       conditions: ['PTSD'],
       lastMoodScore: 3,
       lastEnergyScore: 3,
@@ -46,7 +48,7 @@ const DoctorDashboard: React.FC = () => {
       name: 'Emily Rodriguez',
       age: 22,
       lastUpdate: new Date(Date.now() - 8 * 60 * 60 * 1000),
-      riskLevel: 'Low' as const,
+      riskLevel: 'Low' as RiskLevel,
       conditions: ['Mild Anxiety'],
       lastMoodScore: 4,
       lastEnergyScore: 4,
