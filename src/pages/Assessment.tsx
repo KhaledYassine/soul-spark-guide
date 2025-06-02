@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -18,9 +19,41 @@ import { User, Target, Calendar, Heart, Brain, Activity } from 'lucide-react';
 const Assessment: React.FC = () => {
   const { user } = useAuth();
   const { healthData } = useHealth();
+  const [goals, setGoals] = useState<string[]>(['Reduce anxiety levels', 'Improve sleep quality']);
+  const [medications, setMedications] = useState<string[]>(['Daily vitamins']);
+  const [supportSystem, setSupportSystem] = useState<string[]>(['Family', 'Therapist']);
+
+  const wellnessData = {
+    currentScore: 85,
+    breakdown: {
+      mood: 80,
+      anxiety: 75,
+      sleep: 90,
+      energy: 85
+    }
+  };
+
+  const riskData = {
+    depressionRisk: 'Low',
+    anxietyRisk: 'Moderate',
+    overallRisk: 'Low',
+    riskFactors: ['Work stress', 'Sleep issues'],
+    protectiveFactors: ['Regular exercise', 'Strong support system']
+  };
+
+  const analyticsData = {
+    phq9Score: 8,
+    gad7Score: 12,
+    goals: goals,
+    riskLevel: 'low' as const
+  };
+
+  const handleContinue = () => {
+    console.log('Continue clicked');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6 pb-20">
+    <div className="min-h-screen p-6 pb-20" style={{ backgroundColor: '#F5F5DC' }}>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
@@ -63,18 +96,23 @@ const Assessment: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            <WellnessScore />
-            <MentalHealthRisk />
+            <WellnessScore {...wellnessData} />
+            <MentalHealthRisk {...riskData} />
             <StreakCounter />
-            <GoalSetting />
+            <GoalSetting goals={goals} setGoals={setGoals} />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             <CommunitySupport />
-            <AssessmentAnalytics />
-            <MedicationReminders />
-            <CrisisSupport />
+            <AssessmentAnalytics {...analyticsData} />
+            <MedicationReminders 
+              medications={medications} 
+              setMedications={setMedications}
+              supportSystem={supportSystem}
+              setSupportSystem={setSupportSystem}
+            />
+            <CrisisSupport onContinue={handleContinue} />
           </div>
         </div>
       </div>

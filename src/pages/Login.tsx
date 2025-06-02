@@ -15,7 +15,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-mental-lightGray to-white">
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#F5F5DC' }}>
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md animate-fade-in">
           <div className="text-center mb-8">
@@ -31,7 +31,8 @@ const Login: React.FC = () => {
             
             <Button 
               onClick={handleConnect}
-              className="w-full bg-mental-purple hover:bg-mental-darkPurple text-white py-3"
+              className="w-full text-white py-3"
+              style={{ backgroundColor: '#93932A' }}
             >
               Connect Wallet
             </Button>
