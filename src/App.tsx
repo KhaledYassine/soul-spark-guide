@@ -13,6 +13,7 @@ import { DoctorAuthProvider } from "@/contexts/DoctorAuthContext";
 import { UserModeProvider } from "@/contexts/UserModeContext";
 import EnhancedNavigation from "@/components/EnhancedNavigation";
 import Login from "./pages/Login";
+import InitialAssessment from "./pages/InitialAssessment";
 import Assessment from "./pages/Assessment";
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
@@ -42,6 +43,7 @@ const App = () => (
                         <Routes>
                           <Route path="/" element={<Navigate to="/login" />} />
                           <Route path="/login" element={<Login />} />
+                          <Route path="/initial-assessment" element={<InitialAssessment />} />
                           <Route path="/assessment" element={<Assessment />} />
                           <Route path="/home" element={<Home />} />
                           <Route path="/chat" element={<Chat />} />

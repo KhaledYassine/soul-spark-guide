@@ -10,8 +10,8 @@ const Login: React.FC = () => {
   
   const handleConnect = () => {
     connect();
-    // Navigate to assessment after connecting
-    navigate('/assessment');
+    // Navigate to initial assessment after connecting
+    navigate('/initial-assessment');
   };
 
   return (

@@ -20,8 +20,14 @@ const Assessment: React.FC = () => {
   const { user } = useAuth();
   const { healthData } = useHealth();
   const [goals, setGoals] = useState<string[]>(['Reduce anxiety levels', 'Improve sleep quality']);
-  const [medications, setMedications] = useState<string[]>(['Daily vitamins']);
-  const [supportSystem, setSupportSystem] = useState<string[]>(['Family', 'Therapist']);
+  
+  // Fixed medication format
+  const [medications, setMedications] = useState([
+    { name: 'Daily vitamins', dosage: '1 tablet', time: '08:00', reminder: true }
+  ]);
+  
+  // Fixed support system format
+  const [supportSystem, setSupportSystem] = useState('Family, Therapist');
 
   const wellnessData = {
     currentScore: 85,
@@ -29,14 +35,17 @@ const Assessment: React.FC = () => {
       mood: 80,
       anxiety: 75,
       sleep: 90,
-      energy: 85
+      energy: 85,
+      stress: 25, // Added missing stress
+      activity: 70 // Added missing activity
     }
   };
 
+  // Fixed risk data with numbers instead of strings
   const riskData = {
-    depressionRisk: 'Low',
-    anxietyRisk: 'Moderate',
-    overallRisk: 'Low',
+    depressionRisk: 25, // Changed from 'Low' to number
+    anxietyRisk: 45, // Changed from 'Moderate' to number
+    overallRisk: 'Low' as const,
     riskFactors: ['Work stress', 'Sleep issues'],
     protectiveFactors: ['Regular exercise', 'Strong support system']
   };
@@ -50,6 +59,15 @@ const Assessment: React.FC = () => {
 
   const handleContinue = () => {
     console.log('Continue clicked');
+  };
+
+  // Fixed medication handlers
+  const handleMedicationsUpdate = (newMedications: any[]) => {
+    setMedications(newMedications);
+  };
+
+  const handleSupportSystemUpdate = (newSupport: string) => {
+    setSupportSystem(newSupport);
   };
 
   return (
@@ -108,9 +126,9 @@ const Assessment: React.FC = () => {
             <AssessmentAnalytics {...analyticsData} />
             <MedicationReminders 
               medications={medications} 
-              setMedications={setMedications}
+              setMedications={handleMedicationsUpdate}
               supportSystem={supportSystem}
-              setSupportSystem={setSupportSystem}
+              setSupportSystem={handleSupportSystemUpdate}
             />
             <CrisisSupport onContinue={handleContinue} />
           </div>
