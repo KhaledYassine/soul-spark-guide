@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealth } from '@/contexts/HealthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -15,7 +16,20 @@ import BreathingExercise from '@/components/BreathingExercise';
 import WeeklyChart from '@/components/WeeklyChart';
 import GratitudeJournal from '@/components/GratitudeJournal';
 import WellnessTips from '@/components/WellnessTips';
-import { MessageSquare, Settings, Bell, Database } from 'lucide-react';
+import { 
+  MessageSquare, 
+  Settings, 
+  Bell, 
+  Database, 
+  TrendingUp, 
+  Target, 
+  Calendar,
+  Zap,
+  Award,
+  Sun,
+  Moon,
+  Coffee
+} from 'lucide-react';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
@@ -23,6 +37,7 @@ const Home: React.FC = () => {
   const { unreadCount } = useNotifications();
   const { isRealmReady, syncPreference, saveEncryptedData } = useDatabase();
   const navigate = useNavigate();
+  const [quickMood, setQuickMood] = useState<string>('');
 
   const handleStatusUpdate = async (type: string, value: number) => {
     const updatedStatus = {
@@ -34,7 +49,6 @@ const Home: React.FC = () => {
     
     updateStatus(updatedStatus);
     
-    // Save to encrypted database
     await saveEncryptedData({
       type: 'mood_log',
       data: updatedStatus,
@@ -42,30 +56,71 @@ const Home: React.FC = () => {
     }, 'mood');
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: 'Good Morning', icon: Sun };
+    if (hour < 17) return { text: 'Good Afternoon', icon: Coffee };
+    return { text: 'Good Evening', icon: Moon };
+  };
+
+  const greeting = getGreeting();
+  const GreetingIcon = greeting.icon;
+
+  const wellnessScore = Math.round(
+    (healthData.energy + healthData.happiness + healthData.productivity + (100 - healthData.stress)) / 4
+  );
+
+  const quickMoods = [
+    { emoji: '😊', label: 'Great', value: 'great' },
+    { emoji: '🙂', label: 'Good', value: 'good' },
+    { emoji: '😐', label: 'Okay', value: 'okay' },
+    { emoji: '😕', label: 'Low', value: 'low' },
+    { emoji: '😢', label: 'Difficult', value: 'difficult' }
+  ];
+
+  const todayGoals = [
+    { id: 1, text: 'Take 3 mindful breaths', completed: true },
+    { id: 2, text: '10 minutes meditation', completed: false },
+    { id: 3, text: 'Gratitude journal entry', completed: true },
+    { id: 4, text: 'Go for a walk', completed: false }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-mental-lightGray to-white p-6 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-mental-lightGray via-white to-mental-softGreen p-6 pb-20">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Hello, {user?.nickname || 'there'}! 👋
-            </h1>
-            <p className="text-gray-600">How are you feeling today?</p>
+        {/* Enhanced Header */}
+        <div className="flex justify-between items-start">
+          <div className="animate-fade-in">
+            <div className="flex items-center space-x-2 mb-2">
+              <GreetingIcon className="h-6 w-6 text-mental-purple" />
+              <h1 className="text-3xl font-bold text-gray-900">
+                {greeting.text}, {user?.nickname || 'there'}!
+              </h1>
+            </div>
+            <p className="text-gray-600">Let's check in on your wellness journey</p>
+            <div className="flex items-center space-x-4 mt-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-600">Wellness Score: {wellnessScore}%</span>
+              </div>
+              <Badge variant="outline" className="text-mental-purple border-mental-purple">
+                Day 7 Streak! 🔥
+              </Badge>
+            </div>
           </div>
           <div className="flex space-x-2">
             <Button
               variant="outline"
               size="icon"
               onClick={() => navigate('/settings')}
-              className="relative"
+              className="relative hover:scale-105 transition-transform"
             >
               <Settings className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="relative"
+              className="relative hover:scale-105 transition-transform"
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -77,6 +132,66 @@ const Home: React.FC = () => {
           </div>
         </div>
 
+        {/* Quick Mood Check */}
+        <Card className="border-l-4 border-l-mental-purple shadow-lg bg-gradient-to-r from-white to-mental-lightGray">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Quick Mood Check</h3>
+                <p className="text-sm text-gray-600">How are you feeling right now?</p>
+              </div>
+              <Zap className="h-5 w-5 text-mental-purple" />
+            </div>
+            <div className="flex space-x-3">
+              {quickMoods.map((mood) => (
+                <button
+                  key={mood.value}
+                  onClick={() => setQuickMood(mood.value)}
+                  className={`p-3 rounded-xl transition-all duration-200 hover:scale-110 ${
+                    quickMood === mood.value 
+                      ? 'bg-mental-purple text-white shadow-lg' 
+                      : 'bg-white hover:bg-mental-lightGray'
+                  }`}
+                >
+                  <div className="text-lg">{mood.emoji}</div>
+                  <div className="text-xs font-medium">{mood.label}</div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today's Goals */}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center text-mental-purple">
+              <Target className="h-5 w-5 mr-2" />
+              Today's Wellness Goals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {todayGoals.map((goal) => (
+                <div key={goal.id} className="flex items-center space-x-3">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    goal.completed 
+                      ? 'bg-mental-purple border-mental-purple' 
+                      : 'border-gray-300'
+                  }`}>
+                    {goal.completed && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                  </div>
+                  <span className={goal.completed ? 'line-through text-gray-500' : 'text-gray-900'}>
+                    {goal.text}
+                  </span>
+                  {goal.completed && <Award className="h-4 w-4 text-yellow-500" />}
+                </div>
+              ))}
+            </div>
+            <Progress value={50} className="mt-4" />
+            <p className="text-sm text-gray-600 mt-2">2 of 4 goals completed</p>
+          </CardContent>
+        </Card>
+
         {/* Database Status */}
         <Card className="border-l-4 border-l-mental-purple">
           <CardContent className="pt-4">
@@ -86,6 +201,7 @@ const Home: React.FC = () => {
                 <span className="text-sm font-medium">
                   Database: {isRealmReady ? 'Connected' : 'Disconnected'}
                 </span>
+                <div className={`w-2 h-2 rounded-full ${isRealmReady ? 'bg-green-500' : 'bg-red-500'}`}></div>
               </div>
               <Badge variant="outline" className="text-xs">
                 Sync: {syncPreference}
@@ -94,7 +210,7 @@ const Home: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Health Metrics */}
+        {/* Enhanced Health Metrics */}
         <HealthMetrics
           heartRate={healthData.heartRate}
           steps={healthData.steps}
@@ -105,10 +221,13 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
-            {/* Status Check-in */}
-            <Card>
+            {/* Enhanced Status Check-in */}
+            <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className="text-mental-purple">Status Check-in</CardTitle>
+                <CardTitle className="text-mental-purple flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Status Check-in
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <StatusSlider
@@ -138,40 +257,46 @@ const Home: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Mood Tracker */}
             <MoodTracker />
-
-            {/* Gratitude Journal */}
             <GratitudeJournal />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Weekly Chart */}
             <WeeklyChart />
-
-            {/* Breathing Exercise */}
             <BreathingExercise />
-
-            {/* Wellness Tips */}
             <WellnessTips />
           </div>
         </div>
 
-        {/* Chat Assistant */}
-        <Card>
-          <CardContent className="p-6 text-center">
-            <MessageSquare className="h-12 w-12 text-mental-purple mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Chat with Your Assistant</h3>
-            <p className="text-gray-600 mb-4">
-              Ready to talk about your mental wellness? I'm here to listen and support you.
+        {/* Enhanced Chat Assistant */}
+        <Card className="shadow-2xl bg-gradient-to-r from-mental-purple to-mental-darkPurple text-white">
+          <CardContent className="p-8 text-center">
+            <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-90" />
+            <h3 className="text-2xl font-bold mb-3">Your AI Wellness Companion</h3>
+            <p className="opacity-90 mb-6 text-lg">
+              Ready for a supportive conversation? I'm here to listen, guide, and help you navigate your mental wellness journey.
             </p>
-            <Button 
-              onClick={() => navigate('/chat')}
-              className="bg-mental-purple hover:bg-mental-darkPurple text-white"
-            >
-              Start Conversation
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={() => navigate('/chat')}
+                variant="secondary"
+                size="lg"
+                className="bg-white text-mental-purple hover:bg-gray-100 shadow-lg"
+              >
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Start Conversation
+              </Button>
+              <Button 
+                onClick={() => navigate('/assessment')}
+                variant="outline"
+                size="lg"
+                className="border-white text-white hover:bg-white/10"
+              >
+                <Calendar className="h-5 w-5 mr-2" />
+                View Profile
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
