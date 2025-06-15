@@ -21,9 +21,15 @@ const Assessment: React.FC = () => {
   const { healthData } = useHealth();
   const [goals, setGoals] = useState<string[]>(['Reduce anxiety levels', 'Improve sleep quality']);
   
-  // Fixed medication format
+  // Fixed medication format with proper Medication interface
   const [medications, setMedications] = useState([
-    { name: 'Daily vitamins', dosage: '1 tablet', time: '08:00', reminder: true }
+    { 
+      id: '1',
+      name: 'Daily vitamins', 
+      dosage: '1 tablet', 
+      frequency: 'daily',
+      time: '08:00'
+    }
   ]);
   
   // Fixed support system format
@@ -36,15 +42,14 @@ const Assessment: React.FC = () => {
       anxiety: 75,
       sleep: 90,
       energy: 85,
-      stress: 25, // Added missing stress
-      activity: 70 // Added missing activity
+      stress: 25,
+      activity: 70
     }
   };
 
-  // Fixed risk data with numbers instead of strings
   const riskData = {
-    depressionRisk: 25, // Changed from 'Low' to number
-    anxietyRisk: 45, // Changed from 'Moderate' to number
+    depressionRisk: 25,
+    anxietyRisk: 45,
     overallRisk: 'Low' as const,
     riskFactors: ['Work stress', 'Sleep issues'],
     protectiveFactors: ['Regular exercise', 'Strong support system']
